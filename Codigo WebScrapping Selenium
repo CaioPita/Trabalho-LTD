@@ -1,0 +1,85 @@
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import re
+import math
+import os
+import pandas as pd
+
+# Configuração do WebDriver
+servico = Service(ChromeDriverManager().install())
+navegador = webdriver.Chrome(service=servico)
+
+# Abre a página da KaBuM
+navegador.get("https://www.kabum.com.br/espaco-gamer/cadeiras-gamer")
+
+try:
+    # Obtém o total de produtos disponíveis
+    contador_itens = WebDriverWait(navegador, 10).until(
+        EC.presence_of_element_located((By.ID, "listingCount"))
+    )
+    qtd_itens = contador_itens.text.strip()
+
+    # Captura apenas o número de itens com regex
+    match = re.search(r"\d+", qtd_itens)  
+    if match:
+        qtd = int(match.group())  
+        print(f"Quantidade de itens encontrada: {qtd}")
+
+        # Calcula o número total de páginas (20 itens por página)
+        ultima_pagina = math.ceil(qtd / 20)
+        dic_produtos = {'marca': [], 'preco': []}
+
+        for i in range(1, ultima_pagina + 1):
+            url_pag = f'https://www.kabum.com.br/espaco-gamer/cadeiras-gamer?page_number={i}&page_size=20&facet_filters=&sort=most_searched'
+            navegador.get(url_pag)
+
+            try:
+                # Aguarda a presença dos produtos na página
+                produtos = WebDriverWait(navegador, 10).until(
+                    EC.presence_of_all_elements_located((By.CLASS_NAME, "productCard"))
+                )
+            except:
+                print(f"Nenhum produto encontrado na página {i}. Encerrando busca.")
+                break  # Para o loop se não houver produtos
+
+            for produto in produtos:
+                try:
+                    marca_element = produto.find_element(By.CLASS_NAME, "nameCard")
+                    marca = marca_element.text.strip() if marca_element else "Sem marca"
+
+                    preco_element = produto.find_element(By.CLASS_NAME, "priceCard")
+                    preco = preco_element.text.strip() if preco_element else "Sem preço"
+
+                    # Adiciona os dados ao dicionário
+                    dic_produtos['marca'].append(marca)
+                    dic_produtos['preco'].append(preco)
+
+                    print(f"Marca: {marca} | Preço: {preco}")
+
+                except Exception as e:
+                    print("Erro ao extrair dados do produto:", e)
+
+            # Exibe a URL processada
+            print(f"Final da página {i}: {url_pag}\n")
+
+        # Salvar no diretório atual
+        current_directory = os.getcwd()  # Obtém o diretório atual
+        file_path = os.path.join(current_directory, 'preco_cadeira.csv')  # Caminho completo para o arquivo
+
+        df = pd.DataFrame(dic_produtos)
+        df.to_csv(file_path, encoding='utf-8', sep=';')
+        print(f"Arquivo salvo em: {file_path}")
+
+    else:
+        print("Não foi possível extrair o número de itens.")
+
+except Exception as e:
+    print("Erro ao encontrar o elemento:", e)
+
+finally:
+    # Fecha o navegador, independentemente do que aconteça
+    navegador.quit()
