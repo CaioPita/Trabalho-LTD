@@ -1,0 +1,41 @@
+import csv
+import json
+
+# Abra o arquivo CSV
+with open('preco_cadeira.csv', mode='r', newline='', encoding='utf-8') as file:
+    csv_reader = csv.DictReader(file, delimiter=';')  # Lê o CSV com delimitador ';'
+    
+    produtos = []
+    
+    # Processar cada linha do CSV
+    for linha in csv_reader:
+        try:
+            # Verificar se as colunas 'marca' e 'preco' existem
+            if 'marca' in linha and 'preco' in linha:
+                marca = linha['marca']  # A coluna 'marca' já contém o nome do produto
+                preco = linha['preco'].replace(',', '.')  # Troca a vírgula por ponto no preço
+                
+                # Criar um novo dicionário com a marca e preço separados
+                produto = {
+                    "marca": marca,
+                    "preco": preco
+                }
+                
+                # Adicionar o produto ao resultado
+                produtos.append(produto)
+            else:
+                print(f"Erro na linha (falta coluna 'marca' ou 'preco'): {linha}")
+        
+        except Exception as e:
+            # Caso ocorra algum erro durante o processamento da linha
+            print(f"Erro na linha {linha}: {e}")
+
+# Converter para JSON com indentação
+dados_json = json.dumps(produtos, indent=4)
+
+# Exibir os dados JSON
+print(dados_json)
+
+# Opcional: Salvar os dados JSON em um arquivo
+with open('produtos.json', 'w', encoding='utf-8') as json_file:
+    json.dump(produtos, json_file, ensure_ascii=False, indent=4)
