@@ -1,0 +1,38 @@
+import sqlite3
+import json
+
+# 1. Abrir o arquivo JSON
+with open('arquivo_convertido_csv_json.txt', 'r', encoding='utf-8') as f:
+    produtos = json.load(f)
+
+# 2. Conectar ao banco
+conn = sqlite3.connect('ltdAtualizado.db')
+cursor = conn.cursor()
+
+# 3. Criar a tabela se não existir
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS produto (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT,
+    preco REAL
+)
+''')
+
+# 4. Inserir os dados
+for item in produtos:
+    cursor.execute('''
+    INSERT INTO produto (nome, preco) VALUES (?, ?)
+    ''', (item['marca'], item['preco']))
+
+conn.commit()
+
+# 5. Verificar se os dados foram inseridos corretamente
+cursor.execute("SELECT * FROM produto")
+linhas = cursor.fetchall()
+
+print("\nDados inseridos na tabela 'produto':")
+for linha in linhas:
+    print(linha)
+
+# 6. Fechar conexão
+conn.close()
