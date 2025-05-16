@@ -1,7 +1,0 @@
-from selenium import webdriver
-navegador = webdriver.Chrome()
-navegador.get("https://ri.magazineluiza.com.br/")
-navegador.find_element("xpath",'//*[@id="splash"]/div[1]/a/img').click()
-navegador.find_element("xpath",'//*[@id="Form1"]/div[7]/a').click()
-navegador.find_element("xpath",'//*[@id="slick-slide10"]/div/div/div/div/div/div/a').click()
-navegador.find_element("xpath",'//*[@id="ContentInternal_ContentPlaceHolderConteudo_rptResultados_linkArq_Release1T_0"]/img').click()
